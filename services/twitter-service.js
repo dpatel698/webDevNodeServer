@@ -23,7 +23,6 @@ module.exports = (app) => {
             },
             ...req.body,
         }
-        newTweet['_id'] = (new Date()).getTime();
         tweets = [
             newTweet,
             ...tweets
