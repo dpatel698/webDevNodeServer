@@ -1,14 +1,13 @@
-let tweets = require('../data/tweets.json');
+let dao = require('../db/tweets/tweet-dao')
 
 module.exports = (app) => {
 
-    const findAllTweets = (req, res) => {
-        res.json(tweets);
-    }
+    const findAllTweets = (req, res) =>
+        dao.findAllTweets()
+            .then(tweets => res.json(tweets));
 
     const createTweet = (req, res) => {
         const newTweet = {
-            "_id": (new Date()).getTime() + '',
             "topic": "Web Development",
             "userName": "ReactJS",
             "verified": false,
@@ -23,40 +22,37 @@ module.exports = (app) => {
             },
             ...req.body,
         }
-        tweets = [
-            newTweet,
-            ...tweets
-        ];
+        dao.createTweet(newTweet).then()
         res.json(req.body.tweet);
     }
 
     const deleteTweet = (req, res) => {
         const id = req.params['id'];
-        tweets = tweets.filter(tweet => tweet._id !== id);
+        dao.deleteTweet(id).then();
         res.sendStatus(200);
     }
 
     const likeTweet = (req, res) => {
         const id = req.params['id'];
-        tweets = tweets.map(tweet => {
-            if (tweet._id === id) {
-                if (tweet.liked === true) {
-                    tweet.liked = false;
-                    tweet.stats.likes--;
-                } else {
-                    tweet.liked = true;
-                    tweet.stats.likes++;
-                }
-                return tweet;
+        dao.findTweetById(id).then(tweet => {
+            let newTweet = tweet.toObject();
+            if (newTweet.liked === true) {
+                newTweet.liked = false;
+                newTweet.stats.likes--;
             } else {
-                return tweet;
+                newTweet.liked = true;
+                newTweet.stats.likes++;
             }
-        });
-        res.sendStatus(200);
+            console.log(newTweet);
+            dao.updateTweet(id, newTweet).then()
+            res.sendStatus(200);
+        })
+
     }
+
 
     app.put('/api/tweets/:id/like', likeTweet);
     app.delete('/api/tweets/:id', deleteTweet);
     app.post('/api/tweets', createTweet);
     app.get('/api/tweets', findAllTweets);
-};
+}
